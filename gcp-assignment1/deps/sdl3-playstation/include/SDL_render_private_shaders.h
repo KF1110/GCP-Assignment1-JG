@@ -1,0 +1,7 @@
+#include "../src/render/color.frag.private.h"
+#include "../src/render/linepoint.vert.private.h"
+#include "../src/render/texture_advanced.frag.private.h"
+#include "../src/render/texture_rgb.frag.private.h"
+#include "../src/render/texture_rgba.frag.private.h"
+#include "../src/render/tri_color.vert.private.h"
+#include "../src/render/tri_texture.vert.private.h"
