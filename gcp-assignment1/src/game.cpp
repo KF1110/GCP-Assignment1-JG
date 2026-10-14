@@ -23,6 +23,8 @@ constexpr float turn_rate = 2.0f;
 // The Camera Speed
 constexpr float speed = 15.0f;
 
+bool isPlaying = true;
+
 // The lens, and the space left around the model once it is framed by the camera
 constexpr float field_of_view = 45.0f * std::numbers::pi_v<float> / 180.0f;
 constexpr float margin        = 1.1f;
@@ -189,6 +191,7 @@ void Game::update()
       camera_.move_local(glm::vec3(left.x * speed * dt, 0, -left.y * speed * dt));
   }
 
+  // This zooms in and out when the trigger buttons are pressed.
   const float left_trigger = pads_.axis(SDL_GAMEPAD_AXIS_LEFT_TRIGGER);
   const float right_trigger = pads_.axis(SDL_GAMEPAD_AXIS_RIGHT_TRIGGER);
 
@@ -197,6 +200,27 @@ void Game::update()
       camera_.move_position(glm::vec3(0,0,(-left_trigger + right_trigger)*speed*dt ));
   }
 
+  // This pauses the animation when the square button is pressed.
+  const bool square_pressed = pads_.pressed(SDL_GAMEPAD_BUTTON_WEST);
+  if (square_pressed && isPlaying == true)
+  {
+      isPlaying = false;
+  }
+  else if (square_pressed && isPlaying == false)
+  {
+      isPlaying = true;
+  }
+
+  // This changes the animation when the triangle button is pressed
+  const bool triangle_pressed = pads_.pressed(SDL_GAMEPAD_BUTTON_NORTH);
+  if (triangle_pressed)
+  {
+      animation_++;
+      if (animation_ == 5)
+      {
+          animation_ = 0;
+      }
+  }
   // The clip planes follow the camera, so that the depth buffer spends its
   // precision on the model rather than on the empty space around it.  Three
   // radii of room either side is enough for any pose; the near plane never
@@ -205,7 +229,10 @@ void Game::update()
   camera_.near_plane   = std::max(distance - 3.0f * radius_, radius_ * 0.05f);
   camera_.far_plane    = distance + 3.0f * radius_;
 
-  time_ += dt; // GltfModel::pose wraps this round the animation's length
+  if (isPlaying == true)
+  {
+      time_ += dt; // GltfModel::pose wraps this round the animation's length
+  }
 }
 
 // The interface, worked out before anything is drawn: ImGui's three NewFrames,
@@ -224,7 +251,10 @@ void Game::interface()
                ImGuiWindowFlags_AlwaysAutoResize |
                ImGuiWindowFlags_NoSavedSettings);
 
-  ImGui::Text("Nothing to report yet.");
+  ImGui::Text("Number of triangles: ", model_.indices().size() / 3);
+  //ImGui::Text("Number of animations: " + model_.animation_count());
+  //ImGui::Text("Animation Name: " + std::to_string(model_.animation_name(animation_)));
+  //ImGui::Text("Current Animation: " + animation_);
 
   ImGui::End();
 
