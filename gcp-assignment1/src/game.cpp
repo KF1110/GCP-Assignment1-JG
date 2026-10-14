@@ -20,6 +20,9 @@ constexpr float far_away = 1.0f;
 // How fast the right stick swings the camera: radians per second at full push
 constexpr float turn_rate = 2.0f;
 
+// The Camera Speed
+constexpr float speed = 15.0f;
+
 // The lens, and the space left around the model once it is framed by the camera
 constexpr float field_of_view = 45.0f * std::numbers::pi_v<float> / 180.0f;
 constexpr float margin        = 1.1f;
@@ -177,6 +180,21 @@ void Game::update()
   if (right.x != 0.0f || right.y != 0.0f)
   {
     camera_.orbit(-right.x * turn_rate * dt, -right.y * turn_rate * dt);
+  }
+
+  // The left stick moves the camera around in space.
+  const glm::vec2 left = pads_.stick(Stick::Left);
+  if (left.x != 0.0f || left.y != 0.0f)
+  {
+      camera_.move_local(glm::vec3(left.x * speed * dt, 0, -left.y * speed * dt));
+  }
+
+  const float left_trigger = pads_.axis(SDL_GAMEPAD_AXIS_LEFT_TRIGGER);
+  const float right_trigger = pads_.axis(SDL_GAMEPAD_AXIS_RIGHT_TRIGGER);
+
+  if (left_trigger > 0 || right_trigger > 0)
+  {
+      camera_.move_position(glm::vec3(0,0,(-left_trigger + right_trigger)*speed*dt ));
   }
 
   // The clip planes follow the camera, so that the depth buffer spends its
