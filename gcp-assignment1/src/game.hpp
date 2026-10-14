@@ -36,7 +36,7 @@
 // and you must change the other, or the shader reads bytes that were never
 // sent.  That is the quiet kind of mistake, so the static_assert in game.cpp
 // is there to make at least the size of it loud.
-constexpr int light_count = 1;
+constexpr int light_count = 2;
 
 // One joint, as the vertex shader is given it: three rows of four numbers,
 // rather than the four columns of four that a matrix holds.  A joint matrix's
