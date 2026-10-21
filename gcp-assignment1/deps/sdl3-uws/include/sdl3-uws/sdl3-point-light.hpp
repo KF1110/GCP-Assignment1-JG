@@ -49,7 +49,7 @@ namespace zod
 struct PointLight
 {
   glm::vec3 position{0.0f, 0.0f, 0.0f}; // where it is, in world space
-  float     intensity = 4.0f;           // how bright, one unit away
+  float     intensity = 16.0f;           // how bright, one unit away
 
   glm::vec3 colour{1.0f, 1.0f, 1.0f};   // what colour it shines: white
   bool      enabled_ = true;            // or is it switched off?

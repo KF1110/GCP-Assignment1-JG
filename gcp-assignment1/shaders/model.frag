@@ -23,7 +23,7 @@ layout(set = 2, binding = 0) uniform sampler2D base_colour;
 // exactly this many, and reads nothing back, so a shader expecting more than
 // it is sent reads whatever happens to follow in memory.  See light_count in
 // src/game.cpp, and change the two together.
-const int light_count = 1;
+const int light_count = 2;
 
 // zod::PointLight, as the shader sees it: the same bytes the C++ holds, which
 // is what lets Game::render push the array as it stands.  A vec3 starts a
