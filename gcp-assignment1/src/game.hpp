@@ -65,6 +65,53 @@ struct Transform
   JointRows joints[shader_joint_count];
 };
 
+class AudioStream
+{
+  struct Key {};   // private tag: only AudioStream can name it
+
+public:
+  // The output format is left null: SDL fills it in from the device when the
+  // stream is bound to it.
+  static Result<AudioStream> create(const AudioDevice& device, const Wav& wav)
+  {
+    SDL_AudioStream* stream = SDL_CreateAudioStream(&wav.spec(), nullptr);
+    if (!stream)
+    {
+      return sdl_fail("SDL_CreateAudioStream");
+    }
+
+    if (!SDL_BindAudioStream(device.sdl(), stream))
+    {
+      SDL_DestroyAudioStream(stream);
+      return sdl_fail("SDL_BindAudioStream");
+    }
+
+    return Result<AudioStream>(ns::in_place, Key{}, stream, wav.bytes());
+  }
+
+  AudioStream(Key, SDL_AudioStream* stream, std::span<const Uint8> samples)
+    : stream_{stream}, samples_{samples}
+  {
+  }
+
+  AudioStream(const AudioStream&)            = delete;
+  AudioStream& operator=(const AudioStream&) = delete;
+
+  ~AudioStream() { SDL_DestroyAudioStream(stream_); } // also unbinds it
+
+  // The raw handle, for the SDL calls that want one
+  SDL_AudioStream* sdl() const { return stream_; }
+
+  // The Wav's samples, which it still owns, ready to be put into the stream
+  std::span<const Uint8> samples() const { return samples_; }
+
+private:
+  SDL_AudioStream*       stream_;
+  std::span<const Uint8> samples_;
+};
+
+} // namespace zod
+
 class Game
 {
 public:
@@ -96,6 +143,8 @@ private:
   SDL_GPUSampler*                  sampler_;
   SDL_GPUTexture*                  depth_;
   zod::GltfModel&                  model_;
+  SDL_AudioStream*                 music_;
+  SDL_AudioStream*                 sfx_;
 
   // The lights, worked out from the model's size in the constructor and then
   // left alone.  zod::PointLight is laid out as the fragment shader reads it,

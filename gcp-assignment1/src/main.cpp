@@ -30,6 +30,7 @@
 #include <iostream>                      // std::cerr, std::cout
 #include <vector>                        // std::vector
 #include <filesystem>
+#include "sdl3-uws/sdl3-audio.hpp"        // AudioStream
 
 using namespace zod;
 
@@ -226,6 +227,47 @@ int main()
     return -2;
   }
 
+  // <AUDIO WORK>
+
+  auto music_wav = Wav::create(RESOURCE_DIR "/audio/music/choral.wav");
+  if (!music_wav)
+  {
+      std::cerr << music_wav.error() << std::endl;
+      return -6;
+  }
+
+  auto sfx_wav = Wav::create(RESOURCE_DIR "/audio/sfx/buttonfx.wav");
+  if (!sfx_wav)
+  {
+      std::cerr << sfx_wav.error() << std::endl;
+      return -7;
+  }
+
+  auto audioDevice = AudioDevice::create(*sdl);
+  if (!audioDevice)
+  {
+      std::cerr << audioDevice.error() << std::endl;
+      return -8;
+  }
+
+  auto music = AudioStream::create(*audioDevice, *music_wav);
+  if (!music)
+  {
+      std::cerr << music.error() << std::endl;
+      return -9;
+  }
+
+  auto sfx = AudioStream::create(*audioDevice, *sfx_wav);
+  if (!sfx)
+  {
+      std::cerr << sfx.error() << std::endl;
+      return -10;
+  }
+
+
+
+  // </AUDIO WORK>
+
   auto device = GpuDevice::create(*window);
   if (!device)
   {
@@ -359,7 +401,7 @@ int main()
   p.filename().string();
 
   Game game{*window,  *device, *pipeline, *vertices, *indices,
-            *images,  *sampler, *depth,   *gui,      *model};
+            *images,  *sampler, *depth,   *gui,      *model,    *sfx,   *music};
   game.run();
 
   return 0;

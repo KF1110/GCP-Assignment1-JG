@@ -4,6 +4,7 @@
 #include <algorithm>               // std::max
 #include <cmath>                   // std::sin, std::cos
 #include <numbers>                 // std::numbers::pi_v
+#include "sdl3-uws/sdl3-audio.hpp"        // AudioStream
 
 using namespace zod;
 
@@ -35,15 +36,15 @@ constexpr float margin        = 1.1f;
 // settles its own scale, and the same three numbers then suit any model.
 constexpr glm::vec3 light1_offset{5.0f, 2.0f, -2.5f};
 
-constexpr glm::vec3 light2_offset{ -2.5f, -2.0f, 3.0f };
+constexpr glm::vec3 light2_offset{ -0.5f, -2.0f, 1.5f };
 
 // How bright the light is where the model is.  The shader divides by the
 // distance squared, so the number pushed to it is this multiplied by that
 // distance squared - which makes `brightness` mean "full brightness at the
 // middle of the model, facing the light square on".
-constexpr float light1_brightness = 5.0f;
+constexpr float light1_brightness = 2.5f;
 
-constexpr float light2_brightness = 10.0f;
+constexpr float light2_brightness = 15.0f;
 
 // The ImGui panel's text, as a fraction of the window's height, and the height
 // of ImGui's own font in the pixels it was built for.  A PS5 window is 2160
@@ -74,11 +75,15 @@ Game::Game(const Window& window, const GpuDevice& device,
            const GpuPipeline& pipeline, const GpuBuffer& vertices,
            const GpuBuffer& indices, std::span<SDL_GPUTexture* const> images,
            const GpuSampler& sampler, const GpuDepthTarget& depth,
-           const Gui& gui, GltfModel& model)
+           const Gui& gui, GltfModel& model,
+           const AudioStream& music, AudioStream& sfx)
 
   : window_{window.sdl()}, device_{device.sdl()}, pipeline_{pipeline.sdl()},
     vertices_{vertices.sdl()}, indices_{indices.sdl()}, images_{images},
-    sampler_{ sampler.sdl() }, depth_{ depth.sdl() }, model_{ model }
+    sampler_{ sampler.sdl() }, depth_{ depth.sdl() }, model_{ model }, music_{
+    music.sdl() }, sfx_{ sfx.sdl() }
+},
+sfx_{ sfx.sdl() }
 {
   // The window cannot be resized, so its shape is measured once, here, and
   // becomes the camera's aspect ratio.  It is the one part of a camera that is
@@ -140,6 +145,10 @@ Game::Game(const Window& window, const GpuDevice& device,
 
   lights_[0].colour = { 1.0f, 0.01f, 0.01f };
   lights_[1].colour = { 0.01f, 0.01f, 1.0f };
+
+  const std::span<const Uint8> m = music.samples();
+  SDL_PutAudioStreamData(music_, m.data(), static_cast<int>(m.size()));
+  SDL_FlushAudioStream(music_);
 }
 
 void Game::run()
@@ -264,7 +273,7 @@ void Game::interface()
 
   ImGui::Text("Number of triangles: %d", static_cast<int>(model_.indices().size() / 3));
   ImGui::Text("Joints: &d", static_cast<int>(model_.joint_count()));
-  ImGui::Text("Parts: &d", static_cast<int>(model_.parts()));
+  //ImGui::Text("Parts: &d", static_cast<int>(model_.parts()));
   ImGui::Text("Number of animations: %d", static_cast<int>(model_.animation_count()));
   ImGui::Text("Animation Name: %s",  model_.animation_name(animation_).c_str());
   ImGui::Text("Current Animation: %d", static_cast<int>(animation_));
