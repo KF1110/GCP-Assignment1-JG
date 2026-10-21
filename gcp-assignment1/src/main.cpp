@@ -29,6 +29,7 @@
 #include <cstddef>                       // offsetof
 #include <iostream>                      // std::cerr, std::cout
 #include <vector>                        // std::vector
+#include <filesystem>
 
 using namespace zod;
 
@@ -353,6 +354,9 @@ int main()
     std::cerr << sampler.error() << std::endl;
     return -16;
   }
+
+  std::filesystem::path p = model_path;
+  p.filename().string();
 
   Game game{*window,  *device, *pipeline, *vertices, *indices,
             *images,  *sampler, *depth,   *gui,      *model};

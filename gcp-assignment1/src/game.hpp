@@ -70,7 +70,7 @@ class Game
 public:
   Game(const zod::Window& window, const zod::GpuDevice& device,
        const zod::GpuPipeline& pipeline, const zod::GpuBuffer& vertices,
-       const zod::GpuBuffer& indices,
+       const zod::GpuBuffer& indices, 
        std::span<SDL_GPUTexture* const> images, const zod::GpuSampler& sampler,
        const zod::GpuDepthTarget& depth, const zod::Gui& gui,
        zod::GltfModel& model);

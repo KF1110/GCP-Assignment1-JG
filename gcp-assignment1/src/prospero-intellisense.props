@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Visual Studio's IntelliSense, told where the PS5's C++ library really is.
+
+  The PlayStation 5 SDK ships two standard libraries.  The older one sits
+  directly in target\include; the newer one - the one with <numbers>, <span>,
+  <concepts> and the rest of C++20 - sits in target\include\_cxxvers\v2, with
+  a directory of facade headers in front of it.  Asking the compiler itself
+  what it searches, with
+
+    prospero-clang.exe -std=c++20 -x c++ -E -v empty.cpp
+
+  gives five directories, in this order:
+
+    host_tools\lib\clang\include
+    target\include\_cxxvers\facade
+    target\include
+    target\include\_cxxvers\v2
+    target\include_common
+
+  Sony's Toolset.props hands IntelliSense only the first, third and fifth, in
+  ProsperoClangIncludeDirs.  So IntelliSense cannot find <numbers> at all, and
+  finds the *older* <vector>, which it then fails to parse - which is why those
+  two appear underlined in red while the build itself is perfectly happy.
+
+  Redefining that one property puts the two missing directories back, in the
+  compiler's own order.  It is read in Prospero.Cpp.DesignTime.targets, inside
+  the target that builds IntelliSense's command line, and nowhere else: the
+  real build takes its include paths from $(IncludePath), which is empty here,
+  so the compiler goes on using its own search list and nothing about the build
+  changes.
+
+  CMake points each project at this file with the VS_USER_PROPS target
+  property, which is imported after the platform's own settings - which is what
+  lets this override them.
+-->
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <!-- Whatever this machine's own user settings say, kept: naming a file in
+       VS_USER_PROPS replaces the default import, so it is imported here. -->
+  <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props"
+          Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')"
+          Label="LocalAppDataPlatform" />
+
+  <!-- The include directories are only half of it, and the other half is in
+       prospero-intellisense.h beside this file: three things Sony's own
+       IntelliSense header tells the parser that are not true of this project,
+       beginning with which of the two C++ libraries is in use.  It is
+       force-included after Sony's, which is the order the design-time targets
+       use, and it does nothing at all when the real compiler reads it. -->
+  <ItemDefinitionGroup Condition="'$(Platform)' == 'Prospero'">
+    <ClCompile>
+      <ForcedIncludeFiles>%(ForcedIncludeFiles);$(MSBuildThisFileDirectory)prospero-intellisense.h</ForcedIncludeFiles>
+    </ClCompile>
+  </ItemDefinitionGroup>
+
+  <PropertyGroup Condition="'$(Platform)' == 'Prospero'">
+    <ProsperoClangIncludeDirs Condition="'$(NoStandardIncludePaths)' != 'true'">$(SCE_PROSPERO_SDK_DIR)\host_tools\lib\clang\include;$(SCE_PROSPERO_SDK_DIR)\target\include\_cxxvers\facade;$(SCE_PROSPERO_SDK_DIR)\target\include;$(SCE_PROSPERO_SDK_DIR)\target\include\_cxxvers\v2;$(SCE_PROSPERO_SDK_DIR)\target\include_common;</ProsperoClangIncludeDirs>
+  </PropertyGroup>
+
+</Project>

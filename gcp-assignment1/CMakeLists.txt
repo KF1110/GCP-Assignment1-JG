@@ -196,6 +196,15 @@ function(add_assignment target source_dir shader_dir)
     ps5_link_system_libs(${target})
     set_target_properties(${target} PROPERTIES # Set PS5 /app0/ ${CMAKE_SOURCE_DIR}
                           VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}")
+
+    # Visual Studio's IntelliSense is told less about the PS5 than the compiler
+    # knows, and some of what it is told is wrong, so standard headers end up
+    # underlined in red while the build is perfectly happy. This .props file
+    # puts both right - the missing include directories, and a small header it
+    # force-includes; see the comments at the top of each.
+    set_target_properties(${target} PROPERTIES
+                          VS_USER_PROPS
+                          "${CMAKE_SOURCE_DIR}/prospero-intellisense.props")
   endif()
 endfunction()
 
