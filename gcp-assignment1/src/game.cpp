@@ -31,17 +31,17 @@ constexpr float margin        = 1.1f;
 // of the model's own radius: off to one side, well above, and a little towards
 // the opening view.  Said in radii rather than in units because a glTF file
 // settles its own scale, and the same three numbers then suit any model.
-constexpr glm::vec3 light1_offset{2.0f, 3.0f, -2.0f};
+constexpr glm::vec3 light1_offset{5.0f, 2.0f, -2.5f};
 
-constexpr glm::vec3 light2_offset{ -2.0f, 2.0f, 3.0f };
+constexpr glm::vec3 light2_offset{ -2.5f, -2.0f, 3.0f };
 
 // How bright the light is where the model is.  The shader divides by the
 // distance squared, so the number pushed to it is this multiplied by that
 // distance squared - which makes `brightness` mean "full brightness at the
 // middle of the model, facing the light square on".
-constexpr float light1_brightness = 0.25f;
+constexpr float light1_brightness = 5.0f;
 
-constexpr float light2_brightness = 1.0f;
+constexpr float light2_brightness = 10.0f;
 
 // The ImGui panel's text, as a fraction of the window's height, and the height
 // of ImGui's own font in the pixels it was built for.  A PS5 window is 2160
@@ -123,17 +123,20 @@ Game::Game(const Window& window, const GpuDevice& device,
   // the same space as the camera above - the left-handed one, with the model's
   // z already negated - because a light has to stand in the space of the
   // surfaces it lights.
-  const glm::vec3 light1_offset = radius_ * light1_offset;
-  const glm::vec3 light2_offset = radius_ * light2_offset;
+  const glm::vec3 offset1 = radius_ * light1_offset;
+  const glm::vec3 offset2 = radius_ * light2_offset;
 
-  lights_[0].position = middle + light1_offset;
-  lights_[1].position = middle + light2_offset;
+  lights_[0].position = middle + offset1;
+  lights_[1].position = middle + offset2;
 
   // Bright enough to deliver `brightness` at the middle of the model, given
   // the 1/d² the fragment shader applies to it.  dot(offset, offset) is the
   // distance squared, which is the one the shader divides by.
-  lights_[0].intensity = light1_brightness * glm::dot(light1_offset, offset);
-  lights_[1].intensity = light2_brightness * glm::dot(light2_offset, offset);
+  lights_[0].intensity = light1_brightness * glm::dot(offset1, offset1);
+  lights_[1].intensity = light2_brightness * glm::dot(offset2, offset2);
+
+  lights_[0].colour = { 1.0f, 0.01f, 0.01f };
+  lights_[1].colour = { 0.01f, 0.01f, 1.0f };
 }
 
 void Game::run()
