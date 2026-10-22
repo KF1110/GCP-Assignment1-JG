@@ -73,7 +73,7 @@ public:
        const zod::GpuBuffer& indices, 
        std::span<SDL_GPUTexture* const> images, const zod::GpuSampler& sampler,
        const zod::GpuDepthTarget& depth, const zod::Gui& gui,
-       zod::GltfModel& model);
+       zod::GltfModel& model, std::string& filename);
 
   // The whole of the program's life: loop until something asks to stop.
   void run();
@@ -96,6 +96,7 @@ private:
   SDL_GPUSampler*                  sampler_;
   SDL_GPUTexture*                  depth_;
   zod::GltfModel&                  model_;
+  std::string&                      filename;
 
   // The lights, worked out from the model's size in the constructor and then
   // left alone.  zod::PointLight is laid out as the fragment shader reads it,

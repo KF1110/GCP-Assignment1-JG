@@ -70,11 +70,11 @@ Game::Game(const Window& window, const GpuDevice& device,
            const GpuPipeline& pipeline, const GpuBuffer& vertices,
            const GpuBuffer& indices, std::span<SDL_GPUTexture* const> images,
            const GpuSampler& sampler, const GpuDepthTarget& depth,
-           const Gui& gui, GltfModel& model)
+           const Gui& gui, GltfModel& model, std::string& filename)
 
   : window_{window.sdl()}, device_{device.sdl()}, pipeline_{pipeline.sdl()},
     vertices_{vertices.sdl()}, indices_{indices.sdl()}, images_{images},
-    sampler_{ sampler.sdl() }, depth_{ depth.sdl() }, model_{ model }
+    sampler_{ sampler.sdl() }, depth_{ depth.sdl() }, model_{ model }, filename{ filename }
 {
   // The window cannot be resized, so its shape is measured once, here, and
   // becomes the camera's aspect ratio.  It is the one part of a camera that is
@@ -253,12 +253,12 @@ void Game::interface()
                ImGuiWindowFlags_NoSavedSettings);
 
   ImGui::Text("Number of triangles: %d", static_cast<int>(model_.indices().size() / 3));
-  ImGui::Text("Joints: &d", static_cast<int>(model_.joint_count()));
-  ImGui::Text("Parts: &d", static_cast<int>(model_.parts()));
+  ImGui::Text("Joints: %d", static_cast<int>(model_.joint_count()));
+  ImGui::Text("Parts: %d", static_cast<int>(model_.parts().size()));
   ImGui::Text("Number of animations: %d", static_cast<int>(model_.animation_count()));
   ImGui::Text("Animation Name: %s",  model_.animation_name(animation_).c_str());
   ImGui::Text("Current Animation: %d", static_cast<int>(animation_));
-  //ImGui::Text("File Name: %s", );
+  ImGui::Text("File Name: %s", filename);
 
 
   ImGui::End();

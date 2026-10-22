@@ -356,10 +356,11 @@ int main()
   }
 
   std::filesystem::path p = model_path;
-  p.filename().string();
+  std::string filename = p.filename().string();
+  std::cout << filename << std::endl;
 
-  Game game{*window,  *device, *pipeline, *vertices, *indices,
-            *images,  *sampler, *depth,   *gui,      *model};
+  Game game{ *window,  *device, *pipeline, *vertices, *indices,
+            *images,  *sampler, *depth,   *gui,      *model, filename };
   game.run();
 
   return 0;
