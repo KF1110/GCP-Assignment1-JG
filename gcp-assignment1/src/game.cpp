@@ -75,16 +75,14 @@ Game::Game(const Window& window, const GpuDevice& device,
            const GpuPipeline& pipeline, const GpuBuffer& vertices,
            const GpuBuffer& indices, std::span<SDL_GPUTexture* const> images,
            const GpuSampler& sampler, const GpuDepthTarget& depth,
-           const Gui& gui, GltfModel& model,
-           const AudioStream& music, AudioStream& sfx)
+           const Gui& gui, GltfModel& model, zod::AudioStream& sfx, zod::AudioStream& music)
 
   : window_{window.sdl()}, device_{device.sdl()}, pipeline_{pipeline.sdl()},
     vertices_{vertices.sdl()}, indices_{indices.sdl()}, images_{images},
-    sampler_{ sampler.sdl() }, depth_{ depth.sdl() }, model_{ model }, music_{
-    music.sdl() }, sfx_{ sfx.sdl() }
-},
-sfx_{ sfx.sdl() }
+    sampler_{ sampler.sdl() }, depth_{ depth.sdl() }, model_{ model }, sfx_{ sfx.sdl() }, sfx_samples_{ sfx.samples() }, music_{ music.sdl() },
+    music_samples_{ music.samples() }
 {
+
   // The window cannot be resized, so its shape is measured once, here, and
   // becomes the camera's aspect ratio.  It is the one part of a camera that is
   // not the camera's own business: it belongs to the window.
@@ -145,10 +143,6 @@ sfx_{ sfx.sdl() }
 
   lights_[0].colour = { 1.0f, 0.01f, 0.01f };
   lights_[1].colour = { 0.01f, 0.01f, 1.0f };
-
-  const std::span<const Uint8> m = music.samples();
-  SDL_PutAudioStreamData(music_, m.data(), static_cast<int>(m.size()));
-  SDL_FlushAudioStream(music_);
 }
 
 void Game::run()

@@ -27,6 +27,7 @@
 #include "sdl3-uws/sdl3-imgui.hpp"       // Gui
 #include "sdl3-uws/sdl3-point-light.hpp" // PointLight
 #include "sdl3-uws/sdl3-window.hpp"      // Window
+#include "sdl3-uws/sdl3-audio.hpp"        // AudioStream
 #include <SDL3/SDL.h>                    // SDL_Window, SDL_GPUDevice etc.
 #include <cstddef>                       // std::size_t
 #include <span>                          // std::span
@@ -65,52 +66,7 @@ struct Transform
   JointRows joints[shader_joint_count];
 };
 
-class AudioStream
-{
-  struct Key {};   // private tag: only AudioStream can name it
-
-public:
-  // The output format is left null: SDL fills it in from the device when the
-  // stream is bound to it.
-  static Result<AudioStream> create(const AudioDevice& device, const Wav& wav)
-  {
-    SDL_AudioStream* stream = SDL_CreateAudioStream(&wav.spec(), nullptr);
-    if (!stream)
-    {
-      return sdl_fail("SDL_CreateAudioStream");
-    }
-
-    if (!SDL_BindAudioStream(device.sdl(), stream))
-    {
-      SDL_DestroyAudioStream(stream);
-      return sdl_fail("SDL_BindAudioStream");
-    }
-
-    return Result<AudioStream>(ns::in_place, Key{}, stream, wav.bytes());
-  }
-
-  AudioStream(Key, SDL_AudioStream* stream, std::span<const Uint8> samples)
-    : stream_{stream}, samples_{samples}
-  {
-  }
-
-  AudioStream(const AudioStream&)            = delete;
-  AudioStream& operator=(const AudioStream&) = delete;
-
-  ~AudioStream() { SDL_DestroyAudioStream(stream_); } // also unbinds it
-
-  // The raw handle, for the SDL calls that want one
-  SDL_AudioStream* sdl() const { return stream_; }
-
-  // The Wav's samples, which it still owns, ready to be put into the stream
-  std::span<const Uint8> samples() const { return samples_; }
-
-private:
-  SDL_AudioStream*       stream_;
-  std::span<const Uint8> samples_;
-};
-
-} // namespace zod
+ // namespace zod
 
 class Game
 {
@@ -120,7 +76,8 @@ public:
        const zod::GpuBuffer& indices, 
        std::span<SDL_GPUTexture* const> images, const zod::GpuSampler& sampler,
        const zod::GpuDepthTarget& depth, const zod::Gui& gui,
-       zod::GltfModel& model);
+       zod::GltfModel& model,
+       zod::AudioStream& sfx, zod::AudioStream& music);
 
   // The whole of the program's life: loop until something asks to stop.
   void run();
@@ -130,6 +87,8 @@ private:
   void update();
   void interface();  // the ImGui window, worked out before anything is drawn
   void render();
+  void play_sfx();
+  void play_music();
 
   // All borrowed: main owns them, and outlives this Game.  images_ is a view
   // of main's vector of handles, and the textures themselves belong to the
@@ -144,7 +103,9 @@ private:
   SDL_GPUTexture*                  depth_;
   zod::GltfModel&                  model_;
   SDL_AudioStream*                 music_;
+  std::span<const Uint8> music_samples_;
   SDL_AudioStream*                 sfx_;
+  std::span<const Uint8> sfx_samples_;
 
   // The lights, worked out from the model's size in the constructor and then
   // left alone.  zod::PointLight is laid out as the fragment shader reads it,
