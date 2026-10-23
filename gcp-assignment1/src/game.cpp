@@ -71,16 +71,31 @@ JointRows rows_of(const Mat4& m)
 
 } // namespace
 
+void Game::play_music()
+{
+    SDL_PutAudioStreamData(music_, music_samples_.data(),
+        static_cast<int>(music_samples_.size()));
+    SDL_FlushAudioStream(music_);
+}
+
+void Game::play_sfx()
+{
+    SDL_ClearAudioStream(sfx_);
+    SDL_PutAudioStreamData(sfx_, sfx_samples_.data(),
+        static_cast<int>(sfx_samples_.size()));
+    SDL_FlushAudioStream(sfx_);
+}
+
 Game::Game(const Window& window, const GpuDevice& device,
            const GpuPipeline& pipeline, const GpuBuffer& vertices,
            const GpuBuffer& indices, std::span<SDL_GPUTexture* const> images,
            const GpuSampler& sampler, const GpuDepthTarget& depth,
-           const Gui& gui, GltfModel& model, zod::AudioStream& sfx, zod::AudioStream& music)
+           const Gui& gui, GltfModel& model, zod::AudioStream& sfx, zod::AudioStream& music, std::string& filename)
 
   : window_{window.sdl()}, device_{device.sdl()}, pipeline_{pipeline.sdl()},
     vertices_{vertices.sdl()}, indices_{indices.sdl()}, images_{images},
     sampler_{ sampler.sdl() }, depth_{ depth.sdl() }, model_{ model }, sfx_{ sfx.sdl() }, sfx_samples_{ sfx.samples() }, music_{ music.sdl() },
-    music_samples_{ music.samples() }
+    music_samples_{ music.samples() }, filename{ filename }
 {
 
   // The window cannot be resized, so its shape is measured once, here, and
@@ -143,6 +158,15 @@ Game::Game(const Window& window, const GpuDevice& device,
 
   lights_[0].colour = { 1.0f, 0.01f, 0.01f };
   lights_[1].colour = { 0.01f, 0.01f, 1.0f };
+
+  // This sets the gain of the music and sfx.
+  // A gain of 1 plays a sound as loud as it was recorded; 0 is silent
+  SDL_SetAudioStreamGain(music_, music_gain_);
+  SDL_SetAudioStreamGain(sfx_, sfx_gain_);
+
+  //This starts the music when the program is run.
+  play_music();
+
 }
 
 void Game::run()
@@ -202,7 +226,7 @@ void Game::update()
   const glm::vec2 left = pads_.stick(Stick::Left);
   if (left.x != 0.0f || left.y != 0.0f)
   {
-      camera_.move_local(glm::vec3(left.x * speed * dt, 0, -left.y * speed * dt));
+      camera_.move_local(glm::vec3(left.x * speed * dt * radius_, 0, -left.y * speed * dt * radius_));
   }
 
   // This zooms in and out when the trigger buttons are pressed.
@@ -229,6 +253,7 @@ void Game::update()
   const bool triangle_pressed = pads_.pressed(SDL_GAMEPAD_BUTTON_NORTH);
   if (triangle_pressed)
   {
+      play_sfx();
       animation_++;
       if (animation_ == 5)
       {
@@ -266,12 +291,12 @@ void Game::interface()
                ImGuiWindowFlags_NoSavedSettings);
 
   ImGui::Text("Number of triangles: %d", static_cast<int>(model_.indices().size() / 3));
-  ImGui::Text("Joints: &d", static_cast<int>(model_.joint_count()));
-  //ImGui::Text("Parts: &d", static_cast<int>(model_.parts()));
+  ImGui::Text("Joints: %d", static_cast<int>(model_.joint_count()));
+  ImGui::Text("Parts: %d", static_cast<int>(model_.parts().size()));
   ImGui::Text("Number of animations: %d", static_cast<int>(model_.animation_count()));
-  ImGui::Text("Animation Name: %s",  model_.animation_name(animation_).c_str());
+  ImGui::Text("Animation Name: %s", model_.animation_name(animation_).c_str());
   ImGui::Text("Current Animation: %d", static_cast<int>(animation_));
-  //ImGui::Text("File Name: %s", );
+  ImGui::Text("File Name: %s", filename.c_str());
 
 
   ImGui::End();

@@ -77,7 +77,7 @@ public:
        std::span<SDL_GPUTexture* const> images, const zod::GpuSampler& sampler,
        const zod::GpuDepthTarget& depth, const zod::Gui& gui,
        zod::GltfModel& model,
-       zod::AudioStream& sfx, zod::AudioStream& music);
+       zod::AudioStream& sfx, zod::AudioStream& music, std::string& filename);
 
   // The whole of the program's life: loop until something asks to stop.
   void run();
@@ -106,6 +106,10 @@ private:
   std::span<const Uint8> music_samples_;
   SDL_AudioStream*                 sfx_;
   std::span<const Uint8> sfx_samples_;
+  std::string& filename;
+
+  float                  music_gain_ = 0.6f; 
+  float                  sfx_gain_ = 1.0f; 
 
   // The lights, worked out from the model's size in the constructor and then
   // left alone.  zod::PointLight is laid out as the fragment shader reads it,
